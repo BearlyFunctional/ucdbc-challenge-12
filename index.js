@@ -23,7 +23,7 @@ const mainMenu = () => {
         } if (res.mainMenu == menuChoices[4]) {
             viewTable('employees')
         } if (res.mainMenu == menuChoices[5]) {
-            console.log('TODO')
+            addToTable('employees')
         } if (res.mainMenu == menuChoices[6]) {
             console.log('TODO')
         }
@@ -81,15 +81,33 @@ const addToTable = (tableName) => {
                     message: 'Please enter the desired salary for this new role: '
                 }
             ]) .then ((response) => {
-                const newAddition = [response.roleDepartment, response.roleTitle, response.roleSalary]
-                updateTable(tableName, newAddition)
+                const selectedDep = returnRow('departments', response.roleDepartment, 'dep_name')
+                setTimeout(() => {
+                    const newAddition = [selectedDep[0], response.roleTitle, response.roleSalary]
+                    console.log(selectedDep[0])
+                    updateTable(tableName, newAddition)
+                }, 100);
             })
         }, 500);
     }
 
     if (tableName == 'employees') {
+        const rolesList = returnColumn('roles', 'title')
+        const empsList = returnColumn('employees', 'first_name')
         setTimeout(() => {
             inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'empRole',
+                    message: "What is this employee's role? ",
+                    choices: rolesList
+                },
+                {
+                    type: 'list',
+                    name: 'empManager',
+                    message: "Who is this employee's manager? ",
+                    choices: empsList
+                },
                 {
                     name: 'first_name',
                     message: "What is this employee's first name?: "
@@ -99,8 +117,12 @@ const addToTable = (tableName) => {
                     message: "What is this employee's last name?: "
                 },
             ]) .then ((response) => {
-                const newAddition = ['role_id', 'manager_id', response.first_name, response.last_name]
-                updateTable(tableName, newAddition)
+                const selectedRole = returnRow('roles', response.empRole, 'title')
+                const selectedManager = returnRow('employees', response.empManager, 'first_name')
+                setTimeout(() => {
+                    const newAddition = [selectedRole[0], selectedManager[0], response.first_name, response.last_name]
+                    updateTable(tableName, newAddition)
+                }, 100);
             })
         }, 500);
     }
@@ -152,5 +174,27 @@ const returnColumn = (reqTable, reqColumn) => {
     return columnList
 }
 
+const returnRow = (reqTable, reqRow, reqItem) => {
+    let desiredRow = []
+    dataBase.query(`SELECT * FROM ${reqTable} WHERE ${reqItem} = '${reqRow}'`, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            for (let i = 0; i < result.length; i++) {
+                const element = result[i];
+                desiredRow.push(Object.values(result[i])[0])
+            }
+        }
+    })
+    return desiredRow
+}
 
 mainMenu()
+
+// const response = {roleDepartment: 'Front'}
+
+// const test = returnRow('departments', response.roleDepartment)
+
+// setTimeout(() => {
+//     console.log(test[0])
+// }, 1000);
